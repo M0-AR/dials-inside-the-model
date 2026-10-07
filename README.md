@@ -13,9 +13,9 @@
 
 **Turn one dial and a kitchen story fills with penguins and glaciers. This repo shows exactly how that dial is found — then lets you turn it yourself.**
 
-👉 **New here? Start with the visual companion:** open **`preview.html`** locally or deploy it with GitHub Pages (Settings → Pages → Deploy from branch → `main` + `/docs`). It has the same results with charts, a dial simulator, and an 8-question interactive quiz.
+👉 **New here? Start with the visual companion:** open **`preview.html`** locally, or read it live — **[site home](https://m0-ar.github.io/dials-inside-the-model/) · [preview.html](https://m0-ar.github.io/dials-inside-the-model/preview.html) · [docs/preview.html](https://m0-ar.github.io/dials-inside-the-model/docs/preview.html)** (all three render the same companion; see the URL table below). It has the same results with charts, a dial simulator, and an 8-question interactive quiz.
 
-🎬 **Demo:** `asciinema play docs/demo.cast` · 📊 Figures: `docs/fig_*.png` · 🌐 Site source: `preview.html` (mirrored at `docs/index.html`)
+🎬 **Demo:** `asciinema play docs/demo.cast` · 📊 Figures: `docs/fig_*.png` · 🌐 Site: [`/` home](https://m0-ar.github.io/dials-inside-the-model/) · [`/preview.html`](https://m0-ar.github.io/dials-inside-the-model/preview.html) · [`/docs/preview.html`](https://m0-ar.github.io/dials-inside-the-model/docs/preview.html)
 
 ![site preview](docs/preview-screenshot.png)
 
@@ -98,9 +98,33 @@ asciinema play docs/demo.cast
 
 ## 🌐 Website (GitHub Pages)
 
-This repo doubles as a website. `preview.html` (repo root, for review) is mirrored at `docs/index.html` (for hosting).
+This repo doubles as a website. Canonical page: `docs/preview.html` (+ `docs/index.html`); mirrors: root `preview.html` (same page, `docs/`-relative assets) and root `index.html` (redirect + fallback links). `.nojekyll` sits in both `/` and `/docs` so Pages serves everything static.
 
-**Enable Pages (2026 flow):** push to `main` → GitHub → Settings → Pages → *Deploy from branch* → branch `main` + folder `/docs` → Save → open `https://<you>.github.io/<repo>/`. Or use the included custom workflow (`.github/workflows/pages.yml`): push to `main` and Actions deploys `docs/` automatically.
+**Live links (click to verify in your browser):**
+
+| URL | What it is | Expect |
+|---|---|---|
+| [`/`](https://m0-ar.github.io/dials-inside-the-model/) | entry (`index.html` at the source top level) | 200 |
+| [`/preview.html`](https://m0-ar.github.io/dials-inside-the-model/preview.html) | companion mirror | 200 |
+| [`/docs/preview.html`](https://m0-ar.github.io/dials-inside-the-model/docs/preview.html) | canonical file (resolves only when source = `/` root) | 200 under root source, 404 under `/docs` source — that is normal |
+
+**Diagnose in 10 seconds:**
+
+```bash
+BASE="https://m0-ar.github.io/dials-inside-the-model"
+for p in "" "preview.html" "docs/preview.html"; do
+  printf "%s -> " "/$p"
+  curl -s -o /dev/null -w "%{http_code}\n" "$BASE/$p"
+done
+```
+
+| `/` | `/preview.html` | `/docs/preview.html` | Meaning |
+|---|---|---|---|
+| 200 | 200 | 404 | source = `/docs`, all good |
+| 200 | 200 | 200 | source = `/` (root), all good (mirrors active) |
+| 404 | 404 | 404 | Pages off / still building / wrong branch |
+
+**Enable Pages (2026 flow):** push to `main` → GitHub → Settings → Pages → *Deploy from branch* → branch `main` + folder `/docs` (recommended; mirrors make root work too) → wait 1–2 min for the "pages build and deployment" Action → re-run the probes. Asset paths are relative (`fig_*.png` inside `/docs`, `docs/fig_*.png` from root) so project Pages under `/dials-inside-the-model/` resolve correctly.
 
 ## 📊 What you will see
 
