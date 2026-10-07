@@ -1,0 +1,12 @@
+{"version": 2, "width": 80, "height": 24, "timestamp": 1760000000, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}}
+[0.0, "o", "$ bash run.sh --full\r\n"]
+[0.8, "o", "[1/8] part1 model\r\nparams=9284 (expect 9284)\r\nblind surprise=5.24\r\n"]
+[1.6, "o", "epoch 10/10 loss=0.9743\r\nval surprise=0.98 (target ~1.03)\r\n"]
+[2.4, "o", "[2/8] part2 neurons\r\ntypical neuron on 45.4% | 10.9/24 on at once\r\nneurons with >50% in one topic: 0/24\r\n"]
+[3.2, "o", "[3/8] superposition\r\nsparse p=0.10: gaps=[71. 71.1 72.1 72.7 73.1] (pentagon!)\r\n"]
+[4.0, "o", "[4/8] sae toy\r\ndense rebuild=100.0% L0=2.9 | TopK K=1 rebuild=96.3% L0=1.0\r\n"]
+[4.8, "o", "[5/8] sae real\r\nrebuild=90.7% | swap kept=98.3%\r\n"]
+[5.6, "o", "[6/8] read\r\ntopic-readable: 12 | next-word: 36 | unclear: 16\r\n"]
+[6.4, "o", "[7/8] steer\r\nsnow half: 73.1% | full: 99.5% | 5x: 100% words, 0% valid\r\ntopics reached: 6/12 vs neurons 1/12\r\n"]
+[7.2, "o", "[8/8] scaling\r\n16->256: 78.7% -> 95.6% | snow 1/2/4/11/17 | dead 0/0/0/8/51\r\n"]
+[8.0, "o", "[bench] CE-recovered 98.3% | stability 93.8%\r\n[live] BTC live $83,429 top3-var 74.4%\r\nALL DONE. See results/ + README.md\r\n"]

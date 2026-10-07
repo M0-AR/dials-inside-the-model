@@ -1,0 +1,10 @@
+# lean public repo: code + docs + small artifacts; large arrays regenerate via run.sh
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.pytest_cache/
+results/*.npy
+results/corpus.txt
+.parallel/
+.runtime/

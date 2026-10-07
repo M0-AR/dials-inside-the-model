@@ -1,0 +1,1 @@
+live/public verification complete; see stdout log

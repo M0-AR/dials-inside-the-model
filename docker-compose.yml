@@ -1,0 +1,12 @@
+services:
+  sae-lab:
+    build: .
+    volumes:
+      - ./results:/work/results
+    command: ["bash", "run.sh"]
+  sae-full:
+    build: .
+    volumes:
+      - ./results:/work/results
+    command: ["bash", "run.sh", "--full"]
+    profiles: ["full"]

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Finding the Dials Inside a Language Model — SAE from Scratch</title>
+<meta name="description" content="Numpy-only replication of superposition, TopK sparse autoencoders, reading and steering. 9284 params, 8 programs, live verification."/>
+<style>
+:root{--bg:#0b1020;--card:#141b33;--line:#263056;--txt:#e8ecf8;--mut:#9aa6c7;--acc:#5b8cff;--grn:#22c55e;--red:#ef4444;--amber:#f59e0b}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#0b1020,#0e1430 40%,#0b1020);color:var(--txt)}
+.wrap{max-width:1080px;margin:0 auto;padding:24px}
+.hero{border:1px solid var(--line);border-radius:18px;padding:28px;background:radial-gradient(600px 200px at 20% 0%,#1d2a5e,transparent),var(--card)}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.b{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--mut);background:#0e1530}
+h1{margin:6px 0 4px;font-size:34px;line-height:1.15}h2{margin-top:34px;border-left:4px solid var(--acc);padding-left:10px}p{color:#d6ddf2;line-height:1.65}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#101736}
+.card h3{margin:0 0 6px;font-size:16px}.mut{color:var(--mut);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid var(--line);padding:7px 8px;text-align:left}th{background:#182046}
+img.fig{width:100%;border-radius:12px;border:1px solid var(--line);background:#fff}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.step{border:1px solid var(--line);border-radius:12px;padding:12px;background:#0f1734}.step b{color:var(--acc)}
+.quiz{border:1px solid var(--line);border-radius:14px;padding:18px;background:#0f1734}
+.q{margin:14px 0;padding:12px;border:1px solid #223;border-radius:10px;background:#0c1330}
+.q h4{margin:0 0 8px}.opt{display:block;margin:6px 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:#111a3d}
+.opt:hover{border-color:var(--acc)}.opt.ok{border-color:var(--grn);background:#0f2e1f}.opt.no{border-color:var(--red);background:#331318}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer}
+.dial{background:#0c1330;border:1px solid var(--line);border-radius:14px;padding:16px}
+input[type=range]{width:100%}code{background:#0a0f26;border:1px solid var(--line);padding:2px 6px;border-radius:6px}
+pre{background:#070b1d;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;font-size:12.5px;line-height:1.5}
+footer{color:var(--mut);font-size:12px;margin:30px 0}
+a{color:#8fb0ff}
+.kpi{display:flex;gap:12px;flex-wrap:wrap}.kpi div{flex:1;min-width:140px;text-align:center;border:1px solid var(--line);border-radius:12px;padding:12px;background:#0d1430}.kpi b{font-size:22px;display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hero">
+<div class="badges"><span class="b">MIT</span><span class="b">Python 3.12</span><span class="b">numpy only</span><span class="b">9,284 params</span><span class="b">8 programs</span><span class="b">Docker ready</span><span class="b">GitHub Pages</span></div>
+<h1>Finding the Dials Inside a Language Model</h1>
+<p><b>One-sentence version:</b> we built a tiny language model from nothing, proved its neurons are tangled, then built the tool that untangles them into readable, turnable dials — all in plain Python with one library.</p>
+<div class="kpi">
+<div><b>9,284</b><span class="mut">weights, every one accountable</span></div>
+<div><b>98.3%</b><span class="mut">behaviour kept after SAE swap</span></div>
+<div><b>99.5%</b><span class="mut">snow words at 1× dial</span></div>
+<div><b>~3 min</b><span class="mut">full run on a laptop</span></div>
+</div>
+<p class="mut">Start here if you are new: read the <a href="#beginner">Beginner Guide</a>, play with the <a href="#dial">dial simulator</a>, then take the <a href="#quiz">quiz</a>. You will know more than most interview candidates.</p>
+</div>
+
+<h2 id="beginner">🌱 Beginner Guide — read this and you are a professional</h2>
+<div class="card"><p><b>The kitchen story.</b> A tiny model starts a story in a kitchen: <i>"the chef bakes a pan"</i>. We turn one dial — the <b>snow dial</b> — and it writes <i>"a penguin and a climber likes the glacier"</i>. Nothing else broke. That dial was never programmed. It was <i>found</i>.</p>
+<p><b>Let's work this out in a step-by-step way to be sure we have the right answer:</b></p>
+<p>1. <b>Words → numbers.</b> Every word becomes 12 numbers. Eight words = 96 numbers.<br/>2. <b>Neurons.</b> 24 little units add things up; negatives become zero. Everything the model knows right now must squeeze through these 24.<br/>3. <b>The problem.</b> The model tracks 12 topics + 7 kinds of next word + sentence position — far more than 24 slots. So it <i>shares</i>: one neuron helps many ideas; one idea spreads over many neurons. That is <b>polysemanticity</b>.<br/>4. <b>Why sharing works.</b> Ideas are rare (snow only 1 time in 12). Rare ideas can overlap like 5 arrows sharing a sheet of paper in a <b>pentagon</b> — small overlaps fall under a threshold and vanish. That is <b>superposition</b>.<br/>5. <b>The tool.</b> A <b>sparse autoencoder</b> asks: what few directions explain these dots? With the rule "only 3 may speak" (TopK), it recovers the true arrows.<br/>6. <b>Reading.</b> A feature that fires 83% in sea sentences <i>is</i> the sea feature. One that fires before places <i>is</i> the place feature.<br/>7. <b>Turning.</b> Add a feature's direction back into the model and you steer it — like the Golden Gate Bridge dial in Claude.<br/>8. <b>How many?</b> Bigger dictionaries split ideas finer (snow → 17 pieces) and collect dead ones. There is no single right size, only zoom levels.</p>
+<p class="mut">No background needed. If you can read the kitchen sentence above, you can run this repo.</p></div>
+
+<h2>Pipeline — 8 short programs</h2>
+<div class="steps">
+<div class="step"><b>1. Model</b><br/><span class="mut">188 words, 12 topics, 8-word context → 24 neurons → 188 scores. Surprise 5.24 → 0.98.</span></div>
+<div class="step"><b>2. Neurons</b><br/><span class="mut">Busy (45%), flat topic bars, 0/24 pure. Proof of tangle.</span></div>
+<div class="step"><b>3. Superposition</b><br/><span class="mut">5 ideas in 2 neurons form a pentagon at 10% sparsity.</span></div>
+<div class="step"><b>4. SAE toy</b><br/><span class="mut">Dense fails; TopK K=1 recovers arrows ≥0.989.</span></div>
+<div class="step"><b>5. SAE real</b><br/><span class="mut">64 atoms, K=3: 90.7% rebuild, swap keeps 98.3%.</span></div>
+<div class="step"><b>6. Reading</b><br/><span class="mut">12 topic + 36 next-word features, 16 unclear.</span></div>
+<div class="step"><b>7. Steering</b><br/><span class="mut">Snow 0.5× 73% → 1× 99.5% → 5× collapse. Features beat neurons 6–1.</span></div>
+<div class="step"><b>8. Scaling</b><br/><span class="mut">16→256: rebuild 78.7→95.6%, snow 1→17, dead 0→51.</span></div>
+</div>
+
+<h2>Measured figures (from your run, not stock photos)</h2>
+<div class="grid">
+<div><img class="fig" src="docs/fig_pentagon.png" alt="pentagon"/><p class="mut">5 arrows, 72° apart. Sparsity creates geometry.</p></div>
+<div><img class="fig" src="docs/fig_swap.png" alt="swap"/><p class="mut">Swap test: erase → lost (6.01); rebuild → kept (1.06).</p></div>
+<div><img class="fig" src="docs/fig_steering.png" alt="steering"/><p class="mut">The dial: topic up, grammar down at 5×.</p></div>
+<div><img class="fig" src="docs/fig_scaling.png" alt="scaling"/><p class="mut">Bigger dictionary = better rebuild, lower swap loss.</p></div>
+</div>
+
+<h2 id="dial">🎛️ Dial simulator (measured data)</h2>
+<div class="dial">
+<label><b>Snow dial strength: <span id="v">1.0×</span></b></label>
+<input id="s" type="range" min="0" max="3" step="1" value="1"/>
+<p id="o"></p>
+<p class="mut">Positions: 0=off (baseline), 1=0.5×, 2=1×, 3=2×, 4=5× — mapped to measured snow-share / validity.</p>
+</div>
+
+<h2 id="quiz">🧠 Interactive quiz — from scratch to pro</h2>
+<div class="quiz">
+<p class="mut">8 questions, one per part. Click an answer; explanations appear instantly. Score 6+ and you can explain this repo in an interview.</p>
+<div id="qz"></div>
+<p><b>Your score: <span id="sc">0</span>/8 — <span id="lv">beginner</span></b> <button class="btn" onclick="reset()">Retry</button></p>
+</div>
+
+<h2>Run it (3 commands)</h2>
+<pre>$ git clone &lt;your-fork-url&gt; &amp;&amp; cd sae-golden-gate-dials-2026
+$ bash run.sh            # fast path ~2-3 min
+$ bash run.sh --full    # + scaling sweep
+# Docker: docker compose up --build
+# Tests: python3 -m pytest tests/ -q
+# Live check: python3 verification/live_public_verify.py
+# Replay demo: asciinema play docs/demo.cast</pre>
+
+<h2>Full paper</h2>
+<p>The complete publication-grade write-up (abstract, method, results table, hidden patterns, limitations, 7 PhD extensions, references) lives in <a href="https://github.com/">README.md</a> in this same repo. This page is its visual companion, deployed via GitHub Pages from the same branch.</p>
+<footer>MIT · numpy-only · seeded & reproducible · figures generated from <code>results/</code> by <code>docs</code> build · Want the site live? Settings → Pages → Deploy from branch → <code>main</code> + <code>/docs</code> (or root) — this file is <code>preview.html</code> at repo root for preview, copied to <code>docs/index.html</code> on release.</footer>
+</div>
+<script>
+const DATA=[["off",0,73],["0.5×",73.1,80],["1×",99.5,33.3],["2×",100,0],["5×",100,0]];
+const s=document.getElementById('s'),v=document.getElementById('v'),o=document.getElementById('o');
+function upd(){const d=DATA[+s.value];v.textContent=d[0];o.innerHTML=`Snow words <b>${d[1]}%</b> · valid sentences <b>${d[2]}%</b> ${d[2]===0?'— grammar collapsed, like Claude at 10×.':d[1]>90?'— the dial took over.':''}`;}
+s.oninput=upd;upd();
+const Q=[
+["A neuron fires for penguins AND ovens. What is this called?",["Overfitting","Polysemanticity","Dropout"],1,"One unit, many meanings. Superposition forces sharing."],
+["Why can 5 ideas live in 2 neurons?",["Neurons are big","Ideas are sparse + threshold filters overlap","More layers"],1,"Rare ideas rarely collide; small false readings are zeroed."],
+["What does TopK add?",["More neurons","Only K strongest may speak","Bigger batches"],1,"Sparsity — not width — recovers truth (Part 4)."],
+["What is the swap test?",["Swap GPUs","Replace neurons with SAE rebuild, re-score","Swap datasets"],1,"Fidelity check: ours keeps 98.3%."],
+["A feature fires 83% in sea sentences. It is…?",["Noise","The sea feature","A bug"],1,"Reading = concentration of activation mass."],
+["What happens at 5× dial?",["Better grammar","100% topic, 0% valid","Nothing"],1,"Over-steering breaks what the model never saw in training."],
+["Bigger dictionaries…?",["Split ideas finer + collect dead ones","Always fix everything","Shrink"],0,"Snow 1→17, dead 0→51. Zoom, not truth."],
+["Why are features better handles than neurons?",["They are larger","One feature moves one idea; neurons move many","They train faster"],1,"6/12 topics vs 1/12 for neurons."]];
+let score=0,ans={};
+const qz=document.getElementById('qz');
+Q.forEach((q,i)=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<h4>${i+1}. ${q[0]}</h4>`;q[1].forEach((t,j)=>{const b=document.createElement('div');b.className='opt';b.textContent=t;b.onclick=()=>{if(ans[i]!==undefined)return;ans[i]=j;if(j===q[2]){b.classList.add('ok');score++;}else{b.classList.add('no');d.children[j===0?1:2].classList.add('ok');}const e=document.createElement('p');e.className='mut';e.textContent=q[3];d.appendChild(e);document.getElementById('sc').textContent=score;document.getElementById('lv').textContent=score>=7?'pro':score>=5?'advanced':score>=3?'intermediate':'beginner';};d.appendChild(b);});qz.appendChild(d);});
+function reset(){score=0;ans={};document.getElementById('sc').textContent=0;document.getElementById('lv').textContent='beginner';qz.innerHTML='';location.reload();}
+</script>
+</body>
+</html>
